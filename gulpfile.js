@@ -5,9 +5,8 @@ const { createWriteStream, createReadStream, existsSync } = require('fs')
 const { parse, join } = require('path')
 const rimraf = require('rimraf')
 const mkdirp = require('mkdirp')
+const { spawn } = require('child_process')
 const gulp = require('gulp')
-const typescript = require('gulp-typescript')
-const { exec, spawn } = require('child_process')
 
 /**
  * @file Gulpfile
@@ -72,11 +71,10 @@ const fetchFile = async (url, dir) => {
   const path = join(dir, url.split('/').pop())
   const res = await fetch(url, { headers: { accept: 'application/zip' }, method: 'GET' })
   const stream = createWriteStream(path)
-  await new Promise((resolve, reject) => {
+  return await new Promise((resolve, reject) => {
     res.body.pipe(stream)
-    res.body.on('error', reject).on('finish', resolve)
+    res.body.on('error', reject).on('finish', () => resolve(path))
   })
-  return path
 }
 
 /**
@@ -111,21 +109,19 @@ const sha1 = async (path) => {
 }
 
 gulp.task('start', (cb) => {
-  const child = spawn(ahk, ['Aberoth.ahk'], {
+  spawn(ahk, ['Aberoth.ahk'], {
     cwd: join(cwd, output),
     detached: true,
     stdio: 'ignore',
-  })
-  child.unref()
+  }).unref()
   cb()
 })
 
 gulp.task('kill', (cb) => {
-  const child = spawn('powershell.exe', ['Get-Process', 'AutoHotkey*', '|', 'Stop-Process'], {
+  spawn('powershell.exe', ['Get-Process', 'AutoHotkey*', '|', 'Stop-Process'], {
     cwd,
     stdio: 'ignore',
-  })
-  child.on('close', (c) => cb())
+  }).on('close', () => cb())
 })
 
 gulp.task('clean:out', () => rimrafp(output))
@@ -134,7 +130,7 @@ gulp.task('clean:lib', () => rimrafp(lib))
 
 gulp.task('clean:logs', () => rimrafp('./docs'))
 
-gulp.task('build:copy', (cb) => {
+gulp.task('build:copy', () => {
   return gulp
     .src(['assets/**/*', 'config/*', '**/*.ahk'], { cwd: input, cwdbase: true })
     .pipe(gulp.dest(output))
@@ -153,16 +149,32 @@ gulp.task('build:webapp', (cb) => {
 })
 
 gulp.task('build:ahk2exe', (cb) => {
-  cb()
+  spawn(
+    ahk2exe,
+    ['/in', 'Aberoth.ahk', '/out', 'AberothHotkeys.exe', '/icon', 'assets\\favicon.ico'],
+    {
+      cwd: output,
+    },
+  ).on('close', () => cb())
 })
 
 gulp.task('build:installer', (cb) => {
+  // TODO: InnoSetup installer
   cb()
 })
 
-gulp.task('clean', gulp.series('kill', gulp.parallel('clean:out', 'clean:logs')))
+gulp.task('clean', gulp.parallel('clean:out', 'clean:logs'))
 
-gulp.task('build', gulp.series('kill', gulp.parallel('build:webapp', 'build:copy'), 'build:ahk2exe', 'build:installer'))
+gulp.task('build', gulp.parallel('build:webapp', 'build:copy'))
+
+gulp.task(
+  'release',
+  gulp.series(gulp.parallel('build:webapp', 'build:copy'), 'build:ahk2exe', 'build:installer'),
+)
+
+gulp.task('dev', () => {
+  return gulp.watch('**/*', { cwd: input, ignoreInitial: false }, gulp.series('kill', 'build', 'start'))
+})
 
 gulp.task('install', async () => {
   await mkdirp(lib)
