@@ -1,0 +1,19 @@
+* text=auto
+
+*.md   text diff=markdown
+
+*.yml  text
+*.yaml text
+*.json text
+*.conf text
+
+*.sh   text eol=lf
+*.ps1  text eol=crlf
+
+*.ahk  text eol=crlf
+*.js   text
+*.ts   text
+*.html text
+
+*.git* text eol=lf
+*.lock text eol=lf

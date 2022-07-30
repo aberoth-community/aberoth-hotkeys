@@ -1,0 +1,7 @@
+build
+docs
+lib
+logs
+node_modules
+
+tsconfig.json

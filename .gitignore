@@ -1,3 +1,11 @@
+.vs*
+.idea
+*.bak
+
+build
+docs
+lib
+
 # Logs
 logs
 *.log
