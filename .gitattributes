@@ -1,19 +1,22 @@
 * text=auto
 
-*.md   text diff=markdown
-
-*.yml  text
-*.yaml text
-*.json text
-*.conf text
-
-*.sh   text eol=lf
-*.ps1  text eol=crlf
-
-*.ahk  text eol=crlf
-*.js   text
-*.ts   text
-*.html text
-
-*.git* text eol=lf
-*.lock text eol=lf
+LICENSE   text
+*.md      text diff=markdown
+  
+*.yml     text
+*.yaml    text
+*.json    text
+*.ini     text
+ 
+.husky/*  text eol=lf
+*.sh      text eol=lf
+*.ps1     text eol=crlf
+   
+*.ahk     text eol=crlf
+*.js      text
+*.ts      text
+*.html    text
+*.scss    text diff=css
+   
+*.git*    text eol=lf
+*.lock    text eol=lf
